@@ -1,8 +1,11 @@
 package com.sonic2423.neoforwarding;
 
 import com.google.common.net.InetAddresses;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
 import net.minecraft.network.protocol.login.custom.CustomQueryPayload;
@@ -15,6 +18,7 @@ import java.net.InetAddress;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 
 /*
  * The following is ported from "Paper" with slight modifications to work with NeoForge as Mixin.
@@ -56,19 +60,24 @@ public class PlayerDataForwarding {
     }
 
     public static GameProfile createProfile(final FriendlyByteBuf buf) {
-        final GameProfile profile = new GameProfile(buf.readUUID(), buf.readUtf(16));
-        readProperties(buf, profile);
-        return profile;
+        final UUID id = buf.readUUID();
+        final String name = buf.readUtf(16);
+        final PropertyMap properties = readProperties(buf);
+        return new GameProfile(id, name, properties);
     }
 
-    private static void readProperties(final FriendlyByteBuf buf, final GameProfile profile) {
+    private static PropertyMap readProperties(final FriendlyByteBuf buf) {
         final int properties = buf.readVarInt();
+        final Multimap<String, Property> mutable = ArrayListMultimap.create();
+
         for (int i1 = 0; i1 < properties; i1++) {
             final String name = buf.readUtf(Short.MAX_VALUE);
             final String value = buf.readUtf(Short.MAX_VALUE);
             final String signature = buf.readBoolean() ? buf.readUtf(Short.MAX_VALUE) : null;
-            profile.properties().put(name, new Property(name, value, signature));
+            mutable.put(name, new Property(name, value, signature));
         }
+
+        return new PropertyMap(mutable);
     }
 
     public record VelocityMaxVersionPayload(byte maxVersion) implements CustomQueryPayload {
