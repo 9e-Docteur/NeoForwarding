@@ -6,7 +6,7 @@ import com.mojang.authlib.properties.Property;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
 import net.minecraft.network.protocol.login.custom.CustomQueryPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Mac;
@@ -27,7 +27,7 @@ public class PlayerDataForwarding {
     public static final int MODERN_FORWARDING_WITH_KEY_V2 = 3;
     public static final int MODERN_LAZY_SESSION = 4;
     public static final byte MAX_SUPPORTED_FORWARDING_VERSION = MODERN_LAZY_SESSION;
-    public static final ResourceLocation PLAYER_INFO_CHANNEL = ResourceLocation.fromNamespaceAndPath("velocity", "player_info");
+    public static final Identifier PLAYER_INFO_CHANNEL = Identifier.fromNamespaceAndPath("velocity", "player_info");
 
     public static boolean checkIntegrity(final FriendlyByteBuf buf) {
 
@@ -67,13 +67,13 @@ public class PlayerDataForwarding {
             final String name = buf.readUtf(Short.MAX_VALUE);
             final String value = buf.readUtf(Short.MAX_VALUE);
             final String signature = buf.readBoolean() ? buf.readUtf(Short.MAX_VALUE) : null;
-            profile.getProperties().put(name, new Property(name, value, signature));
+            profile.properties().put(name, new Property(name, value, signature));
         }
     }
 
     public record VelocityMaxVersionPayload(byte maxVersion) implements CustomQueryPayload {
 
-        public static final ResourceLocation id = PLAYER_INFO_CHANNEL;
+        public static final Identifier id = PLAYER_INFO_CHANNEL;
 
         @Override
         public void write(final FriendlyByteBuf buf) {
@@ -81,7 +81,7 @@ public class PlayerDataForwarding {
         }
 
         @Override
-        public @NotNull ResourceLocation id() {
+        public @NotNull Identifier id() {
             return id;
         }
     }
